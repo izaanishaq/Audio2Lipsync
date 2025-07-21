@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to Lip-Sync</title>
+    <link rel="stylesheet" href="styles-glass.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Progressive disclosure styles */
+        .step-hidden { 
+            opacity: 0.3; 
+            pointer-events: none; 
+            transition: all 0.3s ease;
+        }
+        .step-active { 
+            opacity: 1; 
+            pointer-events: auto; 
+            transform: translateY(0);
+        }
+        .step-completed { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+        .step-indicator {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-glass);
+            border: 2px solid var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .step-indicator.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+            transform: scale(1.1);
+        }
+        .step-indicator.completed {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Simplified Header -->
+        <header class="header">
+            <h1 class="header-title">
+                <i class="fas fa-microphone-alt header-icon"></i>
+                Audio to Lip-Sync
+            </h1>
+            <p class="header-subtitle">
+                Create mouth animations synchronized with audio using Intelligent phoneme detection
+            </p>
+        </header>
+
+        <!-- Main Content - Progressive Steps -->
+        <div class="main-content">
+            <!-- Step 1: Audio Input -->
+            <div class="glass-card step-active" id="step1">
+                <h2 class="card-title">
+                    <div class="step-indicator active" id="indicator1">1</div>
+                    Audio Input
+                </h2>
+                
+                <div class="file-upload" id="audioUpload">
+                    <input type="file" id="audioFile" accept="audio/*" hidden>
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="upload-text">Upload Audio File</h3>
+                    <p class="upload-subtitle">MP3, WAV, or other audio formats</p>
+                    <div class="format-tags">
+                        <span class="format-tag">MP3</span>
+                        <span class="format-tag">WAV</span>
+                        <span class="format-tag">OGG</span>
+                    </div>
+                </div>
+                
+                <div class="file-info hidden" id="audioInfo">
+                    <i class="fas fa-file-audio file-info-icon"></i>
+                    <span class="file-info-text" id="audioFileName"></span>
+                    <button class="remove-btn" onclick="removeAudio()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Mouth Shapes (Hidden initially) -->
+            <div class="glass-card step-hidden" id="step2">
+                <h2 class="card-title">
+                    <div class="step-indicator" id="indicator2">2</div>
+                    Mouth Shapes
+                    <div class="info-tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="tooltip-content">
+                            <h4>Required Mouth Shapes</h4>
+                            <p>Upload 14 SVG files named after phonemes:</p>
+                            <div class="phoneme-grid">
+                                <span class="phoneme-item">Neutral.svg</span>
+                                <span class="phoneme-item">M.svg</span>
+                                <span class="phoneme-item">S.svg</span>
+                                <span class="phoneme-item">D.svg</span>
+                                <span class="phoneme-item">Ee.svg</span>
+                                <span class="phoneme-item">Aa.svg</span>
+                                <span class="phoneme-item">Uh.svg</span>
+                                <span class="phoneme-item">Oh.svg</span>
+                                <span class="phoneme-item">R.svg</span>
+                                <span class="phoneme-item">W-Oo.svg</span>
+                                <span class="phoneme-item">F.svg</span>
+                                <span class="phoneme-item">L.svg</span>
+                                <span class="phoneme-item">Smile.svg</span>
+                                <span class="phoneme-item">Surprised.svg</span>
+                            </div>
+                            <p><strong>Tips:</strong> Use consistent naming and ensure SVG files are properly formatted vector graphics.</p>
+                        </div>
+                    </div>
+                </h2>
+                
+                <!-- Library Management (Always visible) -->
+                <div id="librarySection">
+                    <div class="library-section">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-book-open"></i>
+                                Load Saved Library
+                            </label>
+                            <div class="library-controls">
+                                <select id="librarySelect" class="form-select">
+                                    <option value="">Choose saved library...</option>
+                                </select>
+                                <div class="library-actions">
+                                    <button id="deleteLibraryBtn" class="btn btn-danger btn-sm" disabled>
+                                        <i class="fas fa-trash"></i>
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-export"></i>
+                                Library Actions
+                            </label>
+                            <div class="library-file-actions">
+                                <button id="exportLibraryBtn" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-download"></i>
+                                    Export Current as Library
+                                </button>
+                                <button id="importLibraryBtn" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-upload"></i>
+                                    Import Library File
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="divider">
+                            <span>OR UPLOAD NEW</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="file-upload" id="imagesUpload">
+                    <input type="file" id="imageFiles" accept="image/svg+xml" multiple hidden>
+                    <div class="upload-icon">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <h3 class="upload-text">Upload Mouth Shapes</h3>
+                    <p class="upload-subtitle">SVG files for different phonemes</p>
+                </div>
+                
+                <div class="file-info hidden" id="imagesInfo">
+                    <i class="fas fa-check-circle file-info-icon"></i>
+                    <span class="file-info-text"><span id="imageCount">0</span> shapes loaded</span>
+                    <button class="remove-btn" onclick="window.lipSyncGenerator?.removeImages()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Images preview grid (hidden initially) -->
+                <div class="hidden" id="imagesPreview">
+                    <div class="uploaded-shapes-section">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-eye"></i>
+                                Uploaded Shapes
+                                <span class="shape-count-badge" id="shapeCountBadge">0 shapes</span>
+                            </label>
+                            <div class="images-grid-container" id="imagesGridContainer">
+                                <div id="imagesGrid" class="images-grid"></div>
+                                <button class="expand-grid-btn" id="expandGridBtn" onclick="openMouthShapesModal()">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <span>View All</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Library Save Actions (Hidden initially) -->
+                <div class="library-save-section hidden" id="libraryActions">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-save"></i>
+                            Save Current Set as Library
+                        </label>
+                        <div class="save-library-controls">
+                            <input type="text" id="libraryNameInput" class="form-input" placeholder="Enter library name..." style="flex: 1;">
+                            <button id="saveLibraryBtn" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Save Library
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Settings (Hidden initially) -->
+            <div class="glass-card step-hidden" id="step3">
+                <h2 class="card-title">
+                    <div class="step-indicator" id="indicator3">3</div>
+                    Settings
+                </h2>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Frame Rate
+                    </label>
+                    <select id="fps" class="form-select">
+                        <option value="24" selected>24 FPS (Standard)</option>
+                        <option value="30">30 FPS</option>
+                        <option value="60">60 FPS</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-brain"></i>
+                        Processing Mode
+                    </label>
+                    <select id="mappingMode" class="form-select">
+                        <option value="intelligent" selected>Intelligent Phoneme Detection</option>
+                        <option value="volume">Simple Volume Mode</option>
+                    </select>
+                </div>
+                
+                <!-- Advanced Settings (Collapsible) -->
+                <details style="margin-top: 1rem;">
+                    <summary style="color: var(--text-secondary); cursor: pointer; font-size: 0.875rem;">
+                        <i class="fas fa-cog"></i> Advanced Settings
+                    </summary>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-volume-down"></i>
+                                Audio Sensitivity
+                            </label>
+                            <div class="range-container">
+                                <input type="range" id="sensitivity" min="0.1" max="2" value="1.4" step="0.1" class="range-input">
+                                <span class="range-value" id="sensitivityValue">1.4</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-wave-square"></i>
+                                Smoothing
+                            </label>
+                            <div class="range-container">
+                                <input type="range" id="smoothing" min="0" max="10" value="3" step="1" class="range-input">
+                                <span class="range-value" id="smoothingValue">3</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-clock"></i>
+                                Hold & Pause Control
+                                <div class="info-tooltip" style="display: inline-block; margin-left: 0.5rem;">
+                                    <i class="fas fa-info-circle" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                                    <div class="tooltip-content" style="width: 280px;">
+                                        <h4>Hold & Pause Duration</h4>
+                                        <p><strong>Ultra-Fast (0-1):</strong> Instant, ultra-responsive mouth movement</p>
+                                        <p><strong>Quick (2-3):</strong> Fast, responsive speech timing</p>
+                                        <p><strong>Balanced (4-6):</strong> Natural speech timing with moderate pauses</p>
+                                        <p><em>Lower values create snappier animation with minimal pauses</em></p>
+                                    </div>
+                                </div>
+                            </label>
+                            <div class="range-container">
+                                <input type="range" id="holdPause" min="0" max="6" value="1" step="1" class="range-input">
+                                <span class="range-value" id="holdPauseValue">1 (Quick)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-balance-scale"></i>
+                                Global Phoneme Sensitivity
+                                <div class="info-tooltip" style="display: inline-block; margin-left: 0.5rem;">
+                                    <i class="fas fa-info-circle" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                                    <div class="tooltip-content" style="width: 300px;">
+                                        <h4>Global Phoneme Sensitivity</h4>
+                                        <p><strong>0.0-0.3:</strong> Less sensitive - requires stronger audio signals</p>
+                                        <p><strong>0.5:</strong> Balanced detection sensitivity</p>
+                                        <p><strong>0.7-1.0:</strong> More sensitive - detects subtle audio changes</p>
+                                        <p><em>Note: This is now mainly used for backwards compatibility. Use Individual Shape Bias Controls below for better control.</em></p>
+                                        <p><strong>Recommended: Use 0.3-0.5 and adjust individual shape biases instead</strong></p>
+                                    </div>
+                                </div>
+                            </label>
+                            <div class="range-container">
+                                <input type="range" id="phonemeBias" min="0" max="1" value="0.5" step="0.1" class="range-input">
+                                <span class="range-value" id="phonemeBiasValue">0.5 (Balanced)</span>
+                            </div>
+                        </div>
+
+                        <!-- Individual Shape Bias Controls -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-sliders-h"></i>
+                                Individual Shape Bias Controls
+                                <div class="info-tooltip" style="display: inline-block; margin-left: 0.5rem;">
+                                    <i class="fas fa-info-circle" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                                    <div class="tooltip-content" style="width: 350px;">
+                                        <h4>Shape-Specific Bias Controls</h4>
+                                        <p><strong>1.0:</strong> Normal detection sensitivity</p>
+                                        <p><strong>0.5:</strong> Harder to detect (requires stronger audio features)</p>
+                                        <p><strong>1.5-2.0:</strong> Much easier to detect (lower thresholds)</p>
+                                        <p><em>Use higher values for shapes that rarely appear</em></p>
+                                        <p><strong>D, Ee, S</strong> are commonly under-detected - try increasing their values!</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+                                <!-- Vowels -->
+                                <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.85rem;">Vowels</h4>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">Aa (Open): <span id="biasAaValue">1.0</span></label>
+                                        <input type="range" id="biasAa" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">Ee (High Front): <span id="biasEeValue">1.0</span></label>
+                                        <input type="range" id="biasEe" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">Oh (Back): <span id="biasOhValue">1.0</span></label>
+                                        <input type="range" id="biasOh" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="font-size: 0.8rem;">Uh (Central): <span id="biasUhValue">1.0</span></label>
+                                        <input type="range" id="biasUh" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                </div>
+                                
+                                <!-- Consonants -->
+                                <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.85rem;">Consonants</h4>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">D (Alveolar): <span id="biasDValue">1.0</span></label>
+                                        <input type="range" id="biasD" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">S (Sibilant): <span id="biasSValue">1.0</span></label>
+                                        <input type="range" id="biasS" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">M (Bilabial): <span id="biasMValue">1.0</span></label>
+                                        <input type="range" id="biasM" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">L (Liquid): <span id="biasLValue">1.0</span></label>
+                                        <input type="range" id="biasL" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-size: 0.8rem;">R (Rhotic): <span id="biasRValue">1.0</span></label>
+                                        <input type="range" id="biasR" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="font-size: 0.8rem;">F (Fricative): <span id="biasFValue">1.0</span></label>
+                                        <input type="range" id="biasF" min="0.3" max="2.5" value="1.0" step="0.1" class="range-input" style="width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Preset Buttons for Quick Testing -->
+                            <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.85rem;">Quick Presets</h4>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button type="button" id="presetNatural" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        Natural Speech
+                                    </button>
+                                    <button type="button" id="presetBoostDES" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        Boost D, Ee, S
+                                    </button>
+                                    <button type="button" id="presetBalanced" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        Reset All
+                                    </button>
+                                    <button type="button" id="presetVowelFocus" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        Vowel Focus
+                                    </button>
+                                    <button type="button" id="presetConsonantFocus" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        Consonant Focus
+                                    </button>
+                                </div>
+                                
+                                <!-- Save Current Settings as Default -->
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-bookmark" style="color: var(--accent-color); font-size: 0.85rem;"></i>
+                                        <h4 style="margin: 0; color: var(--accent-color); font-size: 0.85rem;">Save Custom Settings</h4>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <button type="button" id="setAsDefaultBtn" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; flex: 1;">
+                                            <i class="fas fa-save"></i>
+                                            Set Current as Default
+                                        </button>
+                                        <button type="button" id="loadDefaultBtn" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-undo"></i>
+                                            Load Saved
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                                        Save your perfectly tuned settings as the new default values
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-palette"></i>
+                                Background Color
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="color" id="videoBgColor" value="#000000" style="width: 2.5rem; height: 2rem;">
+                                <div class="form-input flex-1 flex items-center" id="colorPreview">Black</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-video"></i>
+                                Export Quality
+                            </label>
+                            <select id="videoQuality" class="form-select">
+                                <option value="HD" selected>Full HD (1080p)</option>
+                                <option value="4K">Ultra HD (4K)</option>
+                            </select>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Step 4: Generate & Preview (Hidden initially) -->
+            <div class="glass-card step-hidden" id="step4">
+                <h2 class="card-title">
+                    <div class="step-indicator" id="indicator4">4</div>
+                    Generate Animation
+                </h2>
+                
+                <button id="generateBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;" disabled>
+                    <i class="fas fa-magic"></i>
+                    Generate Animation
+                </button>
+                
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                    <div class="progress-text" id="progressText">Processing...</div>
+                </div>
+                
+                <!-- Preview Section (Hidden until generated) -->
+                <div class="hidden" id="previewSection">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-eye"></i>
+                            Preview Animation
+                        </label>
+                        <div id="previewContainer" style="background: var(--bg-card); border-radius: 8px; padding: 1rem; text-align: center; border: 1px solid var(--border); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+                            <canvas id="previewCanvas" style="max-width: 100%; max-height: 400px; border-radius: 4px; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></canvas>
+                            <audio id="previewAudio" style="display: none;" preload="auto"></audio>
+                            <div id="previewPlaceholder" style="color: var(--text-muted); font-size: 0.75rem;">
+                                <i class="fas fa-play-circle" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                                Animation preview will appear here
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Audio Controls -->
+                    <div class="controls-section" id="audioControls">
+                        <button id="playBtn" class="btn btn-secondary">
+                            <i class="fas fa-play"></i>
+                            Play
+                        </button>
+                        <button id="pauseBtn" class="btn btn-secondary">
+                            <i class="fas fa-pause"></i>
+                            Pause
+                        </button>
+                        <button id="stopBtn" class="btn btn-secondary">
+                            <i class="fas fa-stop"></i>
+                            Stop
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Download Section (Hidden until generated) -->
+                <div class="hidden" id="downloadSection">
+                    <div class="download-section">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-download"></i>
+                                Export Animation
+                            </label>
+                            <div class="download-options">
+                                <div class="download-option">
+                                    <div class="download-option-header">
+                                        <i class="fas fa-images"></i>
+                                        <span>PNG Frames</span>
+                                        <small id="framesDescription">Individual frame images with metadata</small>
+                                    </div>
+                                    <button id="downloadFramesBtn" class="btn btn-secondary" disabled>
+                                        <i class="fas fa-download"></i>
+                                        Download ZIP
+                                    </button>
+                                    <small class="format-note" style="color: #666; margin-top: 5px; display: block;">
+                                        Includes numbered PNG files, animation data, and usage instructions
+                                    </small>
+                                </div>
+                                
+                                <div class="download-option">
+                                    <div class="download-option-header">
+                                        <i class="fas fa-video"></i>
+                                        <span id="videoFormatLabel">Video</span>
+                                        <small id="videoFormatDescription">Complete animation with audio</small>
+                                    </div>
+                                    <button id="downloadVideoBtn" class="btn btn-primary" disabled>
+                                        <i class="fas fa-download"></i>
+                                        <span id="downloadVideoText">Download Video</span>
+                                    </button>
+                                    <small id="videoFormatNote" class="format-note" style="display: none; color: #666; margin-top: 5px;">
+                                        Use online converters like CloudConvert or HandBrake to convert WebM to MP4 if needed
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio element for playback -->
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <!-- Mouth Shapes Modal -->
+    <div id="mouthShapesModal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-eye"></i>
+                    All Mouth Shapes
+                </h3>
+                <button class="modal-close-btn" onclick="closeMouthShapesModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div id="modalImagesGrid" class="modal-images-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load libraries and modules in order -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="js/file-library-manager.js"></script>
+    <script src="js/audio-processor.js"></script>
+    <script src="js/phoneme-detector-natural.js"></script>
+    <script src="js/ui-controller.js"></script>
+    <script src="script-main.js"></script>
+</body>
+</html>

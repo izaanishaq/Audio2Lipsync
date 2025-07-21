@@ -1,0 +1,42 @@
+{
+  "name": "lip-sync-animation-generator",
+  "version": "1.0.0",
+  "description": "A web-based tool that automatically creates mouth animations synchronized with voiceover recordings",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s . -p 3000",
+    "dev": "serve -s . -p 3000 --live",
+    "build": "echo 'This is a static web application - no build process needed'",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": [
+    "animation",
+    "lip-sync",
+    "audio",
+    "web-app",
+    "javascript",
+    "canvas",
+    "mouth-animation"
+  ],
+  "author": "Lip-Sync Animation Generator",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/lip-sync-animation-generator.git"
+  },
+  "homepage": ".",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
