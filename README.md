@@ -1,80 +1,14 @@
 # Audio2LipSync
 
-## How to Use
+Generate lip-sync animations from audio using phoneme-based mouth shape mapping.
 
-### 1. Upload Your Files
+## Quick Start
 
-**Voiceover Audio:**
-- Click "Upload Voiceover" or drag an audio file (MP3, WAV, etc.)
-- The tool will analyze the audio volume levels
-
-**Mouth Shape Images:**
-- Prepare SVG images of the 14 required phoneme mouth shapes
-- Name them exactly as: `Neutral.svg`, `M.svg`, `S.svg`, `D.svg`, `Ee.svg`, `Aa.svg`, `Uh.svg`, `Oh.svg`, `R.svg`, `W-Oo.svg`, `F.svg`, `L.svg`, `Smile.svg`, `Surprised.svg`
-- **Option 1**: Load from saved library (if you've used this phoneme set before)
-- **Option 2**: Upload new SVG files and save them to library for future use
-- The app will automatically validate and categorize your phoneme shapes
-
-### 2. Configure Settings
-
-**Frame Rate (FPS):**
-- Choose from 12, 24, 30, or 60 FPS
-- 24 FPS is standard for most animations
-
-**Audio Sensitivity:**
-- Adjust how responsive the mouth movements are to audio volume
-- Higher values = more dramatic mouth movements
-- Range: 0.1 to 2.0
-
-**Animation Smoothing:**
-- Reduces jittery movements between frames
-- Higher values = smoother but less responsive animation
-- Range: 0 to 10
-
-**Expression Mapping:**
-- **Phoneme-based (Recommended)**: Uses advanced audio analysis for standardized phoneme mouth shapes
-- **Volume-based (Legacy)**: Simple volume-to-openness mapping for traditional sequences
-
-### 3. Using the Lips Library System
-
-**Save Your Mouth Shapes:**
-1. Upload your mouth shape images
-2. Click "Save Current Set" 
-3. Give your library a descriptive name (e.g., "Character_Expressions", "Smirk_Set")
-4. Your mouth shapes are now saved for future projects!
-
-**Load Saved Libraries:**
-1. Use the "Saved Libraries" dropdown
-2. Select a previously saved mouth shape set
-3. Images load instantly - no need to re-upload!
-
-**Manage Libraries:**
-- **Export**: Download library as JSON file for backup or sharing
-- **Import**: Load library files from other projects or teammates
-- **Delete**: Remove unused libraries to keep things organized
-
-**Benefits:**
-- Save time on repeated projects
-- Share mouth shape sets with team members
-- Maintain consistency across multiple animations
-- Backup your custom mouth shape collections
-
-### 4. Generate Animation
-
-- Click "Generate Animation" to start processing
-- The tool will analyze your audio and create frame-by-frame animation
-- Progress bar shows current status
-
-### 5. Preview and Download
-
-**Preview:**
-- Use play/pause/stop controls to preview your animation
-- Check if the mouth movements sync well with your audio
-
-**Download Options:**
-- **HD ZIP Frames**: Ultra high-quality individual PNG frames (1920x1080) for use in animation software
-- **Ultra HD MP4**: Combined MP4 video with synchronized audio in Full HD or 4K quality
-- **Professional Quality**: All exports use maximum quality settings with optimized compression
+1. **Upload audio file** (MP3, WAV, OGG, M4A)
+2. **Upload 14 phoneme mouth shapes** (SVG format): `Neutral`, `M`, `S`, `D`, `Ee`, `Aa`, `Uh`, `Oh`, `R`, `W-Oo`, `F`, `L`, `Smile`, `Surprised`
+3. **Configure settings**: FPS (24 recommended), sensitivity (0.1-2.0), smoothing (0-10)
+4. **Generate animation**
+5. **Download** as HD frames (ZIP) or MP4 video (1080p/4K)
 
 ## Technical Requirements
 
@@ -144,100 +78,55 @@ Name your SVG or PNG files exactly as the shape names above:
 
 ## API Integration
 
-The application now includes a complete REST API for programmatic access:
+## Library System
 
-### Quick Start with API
+- **Save**: Store mouth shape sets for reuse
+- **Load**: Quick access to saved phoneme sets
+- **Export/Import**: Share libraries as JSON files
+- **Manage**: Organize and delete unused sets
 
-1. **Start the API server:**
+## Phoneme Shapes Reference
+
+| Shape | Sounds | Description |
+|-------|--------|-------------|
+| Neutral | Silence | Closed mouth |
+| M | M, P, B | Lips together |
+| S | S, Z, TH | Tongue to teeth |
+| D | D, T, N, L | Tongue to roof |
+| Ee | EE, I, Y | Wide smile |
+| Aa | AA, A, AH | Open vowels |
+| Uh | UH, U, ER | Neutral open |
+| Oh | OH, O, AW | Rounded lips |
+| R | R | Pursed lips |
+| W-Oo | W, OO, QU | Very rounded |
+| F | F, V | Lip to teeth |
+| L | L | Tongue visible |
+| Smile | Happy | Happy expression |
+| Surprised | Shock | Wide open |
+
+## API Integration
+
 ```bash
-cd api
-npm install
-npm start
+cd api && npm install && npm start
 ```
 
-2. **Use the API client:**
 ```javascript
 const client = new LipSyncAPIClient('http://localhost:3001/api');
-
-const job = await client.generateAnimation(audioFile, imageFiles, {
-    fps: 24,
-    sensitivity: 1.2,
-    backgroundColor: '#000000',
-    format: 'video'
-});
-
+const job = await client.generateAnimation(audioFile, imageFiles, options);
 const result = await client.waitForCompletion(job.jobId);
-await client.downloadFile(job.jobId);
 ```
 
-For complete API documentation, see [api/README.md](api/README.md).
+See [api/README.md](api/README.md) for complete documentation.
 
-**Note:** The web application includes advanced intelligent expression mapping optimized for expressive mouth shape sets. The API server currently uses simplified mapping for demonstration purposes. For best results with expressive sets like smirks and grins, use the web application directly.
+## Requirements
 
-## Future Features
-
-- MP4 export format (currently exports as WebM)
-- Advanced mouth shape detection using AI
-- Batch processing for multiple audio files
-- Custom timing adjustments
-- Integration with popular animation software
-- Real-time lip-sync preview during audio playback
-- API server integration of intelligent expression mapping
-- Custom expression category definitions
+- Modern browser (Chrome, Firefox, Safari, Edge)
+- SVG mouth shape files named exactly as phoneme shapes
+- Audio files: MP3, WAV, OGG, M4A
 
 ## Troubleshooting
 
-**Animation doesn't sync well:**
-- Ensure you have uploaded all 14 required phoneme shapes
-- Try the "Phoneme-based" mapping mode for standardized mouth shapes
-- Adjust audio sensitivity and smoothing settings
-- Check that mouth shapes are named correctly (see phoneme table)
-- For traditional open/closed sequences, use "Volume-based" mapping
-
-**Phoneme shapes not recognized:**
-- Check file naming matches exactly: Neutral, M, S, D, Ee, Aa, Uh, Oh, R, W-Oo, F, L, Smile, Surprised
-- Use SVG or PNG format only
-- Ensure files aren't corrupted
-- Try adding prefixes like "mouth_Neutral.svg" if needed
-
-**Browser performance issues:**
-- Use shorter audio files for testing
-- Close other browser tabs
-- Try a lower frame rate (12 or 24 FPS)
-
-**Files won't upload:**
-- Check file formats (PNG for images, common audio formats)
-- Ensure files aren't corrupted
-- Try refreshing the page
-
----
-
-Built with modern web technologies for fast, client-side processing. No server required!
-
-## Video Quality
-
-- **Full HD (1920x1080)**: High-quality output perfect for most projects
-- **Ultra HD 4K (3840x2160)**: Maximum quality for professional productions
-- Higher quality means larger file sizes but superior visual clarity
-
-**Video Encoding:**
-- Automatically uses H.264 codec with AAC audio for MP4 format (best compatibility)
-- Falls back to VP9 codec with Opus audio for WebM if MP4 not supported
-- Bitrates: Up to 12 Mbps for 1080p, 25 Mbps for 4K
-- Multiple fallback options ensure compatibility across browsers
-
-## 🎬 Video Format Support
-
-**MP4 Export (Preferred):**
-- Best compatibility across devices and platforms
-- Uses H.264 video codec with AAC audio
-- Supported in Chrome, Edge, Safari, and most modern browsers
-- Automatically selected when available
-
-**WebM Export (Fallback):**
-- Used when MP4 is not supported by the browser
-- Uses VP9/VP8 video codec with Opus/Vorbis audio  
-- Excellent quality but less universal compatibility
-- Works in Chrome, Firefox, and other Chromium-based browsers
-
-The app automatically detects your browser's capabilities and chooses the best available format for maximum quality and compatibility.
+- **Poor sync**: Use all 14 phoneme shapes, try phoneme-based mapping
+- **Shapes not recognized**: Check exact file naming (case-insensitive)
+- **Performance issues**: Use lower FPS, shorter audio files
+- **Upload problems**: Verify file formats and refresh page
